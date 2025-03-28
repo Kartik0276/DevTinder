@@ -3,19 +3,29 @@ const express = require('express');
 const app = express();
 
 
-// app.use("/user", (req, res) => {
-//     res.send("HAHAHAHAHAHAHAHA....");
-// })
+const {userAuth, adminAuth} = require("./middlewares/auth")
 
-app.use("/user",
-    (req, res, next) => {
-        res.send("This is from first");
-        //next();
-    },
-    (req, res, next) => {
-        res.send("This is from second");
-    }
-)
+app.use("/admin",adminAuth)
+
+app.use("/admin/login", (req, res) => {
+    console.log("Here is the for login");
+    res.send("Admin reached login section");
+})
+
+app.use("/admin/data", (req, res) => {
+    console.log("Here is the admin for data");
+    res.send("Admin reached data section");
+})
+
+app.use("/user/login", (req, res) => {
+    res.send("User is requestd for login");
+})
+
+app.use("/user/data", userAuth, (req,res) => {
+    res.send("User get the data");
+})
+
+
 
 
 
