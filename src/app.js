@@ -7,7 +7,9 @@ const app = express();
 //     res.send("HAHAHAHAHAHAHAHA....");
 // })
 
-app.get("/user", (req, res) => {
+app.get("/user/:name/:password", (req, res) => {
+    //console.log(req.query);
+    console.log(req.params);
     res.send({
         "FirstName" : "Kartik",
         "LastName" : "Maity"
