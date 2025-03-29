@@ -2,6 +2,7 @@ const express = require('express');
 const connectDB = require("./config/database")
 const app = express();
 const User = require("./models/user");
+const { isValidObjectId } = require('mongoose');
 
 app.use(express.json()); //This is the express middleware, it converts the json to java object so we can read the file as req.body.
 
@@ -72,17 +73,29 @@ app.delete("/user", async (req, res) => {
 })
 
 
-app.patch("/user", async (req, res) => {
-    const userId = req.body.userId;
+app.patch("/user/:userId", async (req, res) => {
+    const userId = req.params.userId;
     const data = req.body;
 
     try {
+        const ALLOWED_UPDDATES = ["about", "gender", "age", "skills"];
+        const isUpdateAllowed = Object.keys(data).every((key) => {
+            return ALLOWED_UPDDATES.includes(key)
+        });
+
+        if(!isUpdateAllowed){
+            throw new Error("Updata not allowed");
+        }
+
+        if(data.skills.length > 10){
+            throw new Error("Skills should not exceed 10");
+        }
         const user = await User.findByIdAndUpdate({ _id: userId }, data, { returnDocument: 'after' }, {
             runValidators: true
         });
         res.send(user);
     } catch (error) {
-        res.status(400).send("Something went wrong!!!");
+        res.status(400).send(error.message);
     }
 })
 
