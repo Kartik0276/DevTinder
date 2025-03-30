@@ -5,9 +5,14 @@ const User = require("./models/user");
 const { isValidObjectId } = require('mongoose');
 const { signupValidator } = require("./utils/validation");
 const bcrypt = require('bcrypt');
+const cookieParser = require('cookie-parser');
+const jwt = require('jsonwebtoken');
+const { userAuth } = require("./middlewares/auth")
 
 const app = express();
 app.use(express.json());
+
+app.use(cookieParser()); // This helps to read the token from cookie
 
 // User Signup
 app.post("/signup", async (req, res) => {
@@ -37,77 +42,29 @@ app.post("/signup", async (req, res) => {
     }
 });
 
-// Get user by emailId
-app.get("/user", async (req, res) => {
+// Profile of user
+app.get("/profile",userAuth, async (req, res) => {
     try {
-        const userEmail = req.body.emailId;
-        if (!userEmail) throw new Error("Email is required");
 
-        const userData = await User.findOne({ emailId: userEmail });
-        if (!userData) {
-            return res.status(404).send("User not found");
-        }
-        res.send(userData);
-    } catch (error) {
-        res.status(400).send(error.message);
-    }
-});
 
-// Get all users
-app.get("/feed", async (req, res) => {
-    try {
-        const getAllUsers = await User.find({});
-        if (getAllUsers.length === 0) {
-            return res.status(404).send("No users found");
-        }
-        res.send(getAllUsers);
-    } catch (err) {
-        res.status(400).send(err.message);
-    }
-});
 
-// Delete user by ID
-app.delete("/user", async (req, res) => {
-    try {
-        const userId = req.body.userId;
-        if (!isValidObjectId(userId)) throw new Error("Invalid user ID");
+        // Validate token
 
-        const user = await User.findByIdAndDelete(userId);
-        if (!user) return res.status(404).send("User not found");
-
-        res.send("User deleted successfully");
-    } catch (error) {
-        res.status(400).send(error.message);
-    }
-});
-
-// Update user by ID
-app.patch("/user/:userId", async (req, res) => {
-    try {
-        const userId = req.params.userId;
-        if (!isValidObjectId(userId)) throw new Error("Invalid user ID");
-
-        const ALLOWED_UPDATES = ["about", "gender", "age", "skills", "photoUrl"];
-        const updates = Object.keys(req.body);
-        const isUpdateAllowed = updates.every((key) => ALLOWED_UPDATES.includes(key));
-
-        if (!isUpdateAllowed) throw new Error("Invalid updates");
-
-        if (req.body.skills && req.body.skills.length > 10) {
-            throw new Error("Skills should not exceed 10");
-        }
-
-        const user = await User.findByIdAndUpdate(userId, req.body, {
-            new: true,
-            runValidators: true
-        });
-        if (!user) return res.status(404).send("User not found");
+        //finding user based on id
+        const user = req.user;
 
         res.send(user);
+
+
+
+        // console.log("Logged in user is : " + _id);
+        // console.log(decodedMessage);
+        // console.log(cookie);
+        // res.send("Cookie loading...")
     } catch (error) {
-        res.status(400).send(error.message);
+        res.status(400).send("Error: " + error.message);
     }
-});
+})
 
 // Login user
 app.post("/login", async (req, res) => {
@@ -120,15 +77,28 @@ app.post("/login", async (req, res) => {
         }
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (isPasswordValid) {
+
+            //Create a JWT Token
+            const token = await jwt.sign({ _id: user._id }, "Kartik@123$123", {expiresIn : "1d"});
+            //Add the token to cookie and send the response back to the user
+            res.cookie("token", token, {expires : new Date(Date.now() + 8 * 3600000)});
+
             res.send("login Successfully!");
         }
-        else{
+        else {
             throw new Error("Invalid Credintials...");
         }
 
     } catch (error) {
         res.status(400).send("Error: " + error.message);
     }
+})
+
+app.post("/sendConnectionRequest",userAuth, async(req, res) => {
+    // Sending connection request logic
+    const user = req.user;
+    res.send(`Connection request send from: ${user.firstName}`);
+
 })
 
 // Connect to DB and start server
