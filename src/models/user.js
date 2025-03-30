@@ -1,11 +1,12 @@
+// user.js (User Model)
 const mongoose = require('mongoose');
+const validator = require("validator");
 
 const userSchema = new mongoose.Schema({
     firstName: {
         type: String,
         required: true,
         minLength: 3
-
     },
     lastName: {
         type: String,
@@ -16,43 +17,57 @@ const userSchema = new mongoose.Schema({
         unique: true,
         trim: true,
         lowercase: true,
-
+        validate(value) {
+            if (!validator.isEmail(value)) {
+                throw new Error("Invalid email: " + value);
+            }
+        }
     },
     password: {
         type: String,
         required: true,
-        minLength: 6,
-
+        minLength: 6
     },
     age: {
         type: Number,
         required: true,
         min: 18,
-        max: 99,
+        max: 99
     },
     gender: {
         type: String,
         required: true,
         lowercase: true,
-        // Custom validation method to check if the gender is one of the allowed values
-        validate: function (value) {
+        validate(value) {
             if (!["male", "female", "other"].includes(value)) {
-                throw new Error("Invalid gender");
+                throw new Error("Invalid gender: " + value);
+            }
+        }
+    },
+    photoUrl: {
+        type: String,
+        default: "https://img.freepik.com/premium-vector/gray-avatar-icon-vector-illustration_276184-163.jpg?semt=ais_hybrid",
+        validate(value) {
+            if (!validator.isURL(value)) {
+                throw new Error("Invalid photo URL: " + value);
             }
         }
     },
     skills: {
-        type: [String]
-
+        type: [String],
+        validate(skills) {
+            if (skills.length > 10) {
+                throw new Error("Skills should not exceed 10");
+            }
+        }
     },
     about: {
         type: String,
-        default: "This is about section with default values",
+        default: "This is about section with default values"
     }
-},
-    {
-        timestamps: true,
-    });
+}, {
+    timestamps: true,
+});
 
 const User = mongoose.model('User', userSchema);
 
