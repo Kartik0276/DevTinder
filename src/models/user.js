@@ -26,11 +26,13 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,
         required: true,
-        minLength: 6
+        minLength: 6,
+        maxLength:255
     },
     age: {
         type: Number,
         required: true,
+        trim: true,
         min: 18,
         max: 99
     },
