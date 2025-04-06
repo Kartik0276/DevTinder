@@ -18,9 +18,9 @@ app.use(cookieParser()); // This helps to read the token from cookie
 
 const authRouter = require('./routes/auth');
 const profileRouter = require('./routes/profile');
-
+const requestRouter = require('./routes/request')
 //using router
-app.use('/',authRouter, profileRouter);
+app.use('/',authRouter, profileRouter, requestRouter);
 
 
 
